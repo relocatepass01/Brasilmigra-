@@ -10,6 +10,7 @@ const appState = {
     currentQuestion: 0,
     answers: {},
     totalQuestions: 9,
+    documents: []
 };
 
 const questions = [
@@ -103,6 +104,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setupNavigation();
     setupUploadArea();
     setupProfileForm();
+    setupDocumentForm();
+    loadDocumentsFromStorage();
     showSection('inicio');
 });
 
@@ -291,19 +294,19 @@ function setupUploadArea() {
 
     uploadArea.addEventListener('dragover', (e) => {
         e.preventDefault();
-        uploadArea.style.borderColor = 'var(--primary-color)';
+        uploadArea.style.borderColor = 'var(--color-primary)';
         uploadArea.style.backgroundColor = '#f0faf8';
     });
 
     uploadArea.addEventListener('dragleave', () => {
-        uploadArea.style.borderColor = '#e0e0e0';
-        uploadArea.style.backgroundColor = 'transparent';
+        uploadArea.style.borderColor = '#1a6b5e';
+        uploadArea.style.backgroundColor = 'rgba(26, 107, 94, 0.05)';
     });
 
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
-        uploadArea.style.borderColor = '#e0e0e0';
-        uploadArea.style.backgroundColor = 'transparent';
+        uploadArea.style.borderColor = '#1a6b5e';
+        uploadArea.style.backgroundColor = 'rgba(26, 107, 94, 0.05)';
 
         const files = e.dataTransfer.files;
         if (files.length > 0) {
@@ -329,9 +332,146 @@ function handleFileSelect() {
 
         uploadArea.innerHTML = `
             <div style="font-size: 32px; margin-bottom: 10px;">✓</div>
-            <p style="color: var(--success-color); font-weight: 600;">${fileName}</p>
+            <p style="color: var(--color-success); font-weight: 600;">${fileName}</p>
             <small>${fileSize} MB</small>
         `;
+    }
+}
+
+// Setup Document Form
+function setupDocumentForm() {
+    const form = document.querySelector('.upload-form');
+    if (!form) return;
+
+    const submitBtn = form.querySelector('.btn-primary');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', handleDocumentUpload);
+    }
+}
+
+// Handle Document Upload
+function handleDocumentUpload(e) {
+    e.preventDefault();
+
+    const docType = document.getElementById('doc-type');
+    const docName = document.getElementById('doc-name');
+    const fileInput = document.getElementById('fileInput');
+
+    if (!docType.value) {
+        alert('Por favor selecciona un tipo de documento');
+        return;
+    }
+
+    if (fileInput.files.length === 0) {
+        alert('Por favor selecciona un archivo');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const document = {
+            id: Date.now(),
+            type: docType.value,
+            name: docName.value || file.name,
+            fileName: file.name,
+            fileSize: (file.size / 1024 / 1024).toFixed(2),
+            dateUploaded: new Date().toLocaleDateString('es-ES'),
+            fileData: e.target.result
+        };
+
+        appState.documents.push(document);
+        saveDocumentsToStorage();
+
+        // Reset form
+        docType.value = '';
+        docName.value = '';
+        fileInput.value = '';
+        document.getElementById('uploadArea').innerHTML = `
+            <div class="upload-icon">📁</div>
+            <p>Clique para selecionar un arquivo</p>
+            <small>JPG, PNG, PDF - máx. 10 MB</small>
+        `;
+
+        alert('✓ Documento subido exitosamente!');
+        displayDocuments();
+    };
+
+    reader.readAsDataURL(file);
+}
+
+// Save Documents to Storage
+function saveDocumentsToStorage() {
+    const documentsToSave = appState.documents.map(doc => ({
+        ...doc,
+        fileData: undefined // No guardar datos binarios para simplificar
+    }));
+    localStorage.setItem('brasilmigra_documents', JSON.stringify(documentsToSave));
+}
+
+// Load Documents from Storage
+function loadDocumentsFromStorage() {
+    const stored = localStorage.getItem('brasilmigra_documents');
+    if (stored) {
+        appState.documents = JSON.parse(stored);
+        displayDocuments();
+    }
+}
+
+// Display Documents
+function displayDocuments() {
+    const documentsList = document.querySelector('.documents-list');
+    if (!documentsList) return;
+
+    if (appState.documents.length === 0) {
+        documentsList.innerHTML = `
+            <h3>Documentos enviados (0)</h3>
+            <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <p>Ainda não tem documentos subidos.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `<h3>Documentos enviados (${appState.documents.length})</h3>`;
+    html += '<div class="documents-table">';
+
+    const docTypeLabels = {
+        'passaporte': '🛂 Passaporte',
+        'rne': '📝 RNE / CRNM',
+        'cpf': '🔢 CPF',
+        'certidao-nascimento': '👶 Certidão de Nascimento',
+        'comprovante-residencia': '🏠 Comprovante de Residência',
+        'certificado-antecedentes': '📜 Certificado de Antecedentes',
+        'outro': '📄 Outro'
+    };
+
+    appState.documents.forEach(doc => {
+        html += `
+            <div class="document-item">
+                <div class="document-info">
+                    <div class="document-type">${docTypeLabels[doc.type] || doc.type}</div>
+                    <div class="document-name">${doc.name}</div>
+                    <div class="document-meta">${doc.fileSize} MB • ${doc.dateUploaded}</div>
+                </div>
+                <button class="btn-delete" onclick="deleteDocument(${doc.id})">Eliminar</button>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    documentsList.innerHTML = html;
+}
+
+// Delete Document
+function deleteDocument(docId) {
+    if (confirm('¿Está seguro de que desea eliminar este documento?')) {
+        appState.documents = appState.documents.filter(doc => doc.id !== docId);
+        saveDocumentsToStorage();
+        displayDocuments();
+        alert('Documento eliminado exitosamente');
     }
 }
 
