@@ -5,7 +5,7 @@
 // Necesitas agregar en tu index.html:
 // <script src="https://js.stripe.com/v3/"></script>
 
-const STRIPE_PUBLIC_KEY = 'pk_test_TU_STRIPE_PUBLIC_KEY_AQUI'; // Reemplazar
+const STRIPE_PUBLIC_KEY = 'pk_test_51TwAUmEztBvHow2TiSQWQTCcNa2eEpFVj37ysELQInAUCA7LjC42K7DPgF4LaUUfJPNWolWd093ETEcmbeCNaqdl00wbEj5Z0b'; // Reemplazar
 let stripe = null;
 
 // Inicializar Stripe
