@@ -475,15 +475,32 @@ function deleteDocument(docId) {
     }
 }
 
-// Setup Profile Form
+// Setup Profile Form conectado a Supabase
 function setupProfileForm() {
     const form = document.querySelector('.profile-form');
     if (!form) return;
-
-    form.addEventListener('submit', function(e) {
+    
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        alert('Perfil actualizado exitosamente! Tus cambios han sido guardados.');
-        this.reset();
+        
+        // Obtenemos los valores que escribiste en la página
+        const nombre = document.getElementById('nome')?.value || '';
+        const email = document.getElementById('email')?.value || '';
+        
+        // Guardamos en la tabla 'usuarios' de Supabase
+        const { data, error } = await supabase
+            .from('usuarios')
+            .upsert([
+                { email: email, nombre: nombre }
+            ]);
+
+        if (error) {
+            console.error('Error al guardar:', error.message);
+            alert('Hubo un error al guardar en Supabase.');
+        } else {
+            alert('¡Perfil guardado con éxito en Supabase!');
+            this.reset();
+        }
     });
 }
 
