@@ -10,8 +10,8 @@ let supabase = null;
 
 // Inicializar Supabase
 function initSupabase() {
-    const SUPABASE_URL = 'TU_SUPABASE_URL_AQUI'; // Reemplazar
-    const SUPABASE_KEY = 'TU_SUPABASE_KEY_AQUI'; // Reemplazar
+    const SUPABASE_URL = 'https://wdhvycncwfydpgeqlvwb.supabase.co'; // Reemplazar
+    const SUPABASE_KEY = 'sb_publishable_o4qKEJ1v7VgVpEGq1F2AAg_o7RvIrK5'; // Reemplazar
     
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
